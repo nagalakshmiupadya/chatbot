@@ -3,6 +3,11 @@ import google.generativeai as genai
 import os
 from dotenv import load_dotenv
 from flask_cors import CORS  # Allows frontend to talk to backend
+from flask_cors import CORS
+
+app = Flask(__name__)
+CORS(app, resources={r"/*": {"origins": "https://nagalakshmiupadya.github.io/chatbot/"}})  # Allow all origins
+
 
 # Load environment variables from .env file
 load_dotenv()
