@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        /* Chatbot container */
+        #chatbot {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 300px;
+            height: 400px;
+            background-color: #f1f1f1;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            display: none;
+            flex-direction: column;
+            z-index: 999;
+        }
+
+        @media screen and (max-width: 600px) {
+    #chatInput {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+    }
+
+    #userInput {
+        width: calc(100% - 50px);
+        flex-grow: 1;
+    }
+
+    #submitBtn, #speechBtn {
+        width: 40px;
+        height: 40px;
+        font-size: 16px;
+    }
+}
+
+body {
+    overflow-x: hidden; /* Prevents horizontal scrolling */
+}
+
+#chatbot {
+    max-width: 90vw; /* Ensures it fits within screen */
+    height: 60vh; /* Adjust height for better visibility */
+}
+
+
+#chatMessages {
+    word-wrap: break-word;
+}
+
+button {
+    padding: 10px;
+    font-size: 16px;
+}
+
+
+        /* Header of the chatbot */
+        #chatbotHeader {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px;
+            text-align: center;
+            border-top-left-radius: 10px;
+            border-top-right-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Chat messages area */
+        #chatMessages {
+            flex: 1;
+            padding: 10px;
+            overflow-y: auto;
+            background-color: #fff;
+            border-bottom: 1px solid #ccc;
+        }
+
+        /* Chat input area */
+        #chatInput {
+            display: flex;
+            padding: 10px;
+            background-color: #f9f9f9;
+        }
+
+        /* Input and buttons */
+        #userInput {
+            flex: 1;
+            padding: 6px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
+            height: 35px;
+        }
+
+        #submitBtn, #speechBtn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 5px;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            margin-left: 10px;
+            height: 35px;
+            width: 35px;
+        }
+
+        #chatbotToggle {
+            position: fixed;
+            bottom: 35px;
+            right: 20px;
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+        }
+
+        #closeChatBtn {
+            background-color: transparent;
+            border: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Chatbot toggle button -->
+<div id="chatbotToggle" onclick="toggleChatbot()">💬</div>
+
+<!-- Chatbot window -->
+<div id="chatbot">
+    <div id="chatbotHeader">
+        <span>Saree Mahal</span>
+        <button id="closeChatBtn" onclick="closeChatbot()">❌</button>
+    </div>
+    <div id="chatMessages">
+        <p><strong>Saree Mahal:</strong> Hello! How can I help you today?</p>
+    </div>
+    <div id="chatInput">
+        <input type="text" id="userInput" placeholder="Type your message..." onkeydown="if(event.key === 'Enter') submitMessage();" />
+        <button id="submitBtn" onclick="submitMessage()">▶</button>
+        <button id="speechBtn" onclick="startSpeechRecognition()">🎤</button>
+    </div>
+</div>
+
+<script>
+    function toggleChatbot() {
+        var chatbot = document.getElementById("chatbot");
+        var toggleBtn = document.getElementById("chatbotToggle");
+        chatbot.style.display = chatbot.style.display === "none" ? "flex" : "none";
+        toggleBtn.style.display = chatbot.style.display === "none" ? "block" : "none";
+    }
+
+    function closeChatbot() {
+        document.getElementById("chatbot").style.display = "none";
+        document.getElementById("chatbotToggle").style.display = "block";
+    }
+
+    function submitMessage() {
+        var userInput = document.getElementById("userInput").value.trim();
+        if (!userInput) return;
+
+        var chatMessages = document.getElementById("chatMessages");
+        chatMessages.innerHTML += `<p><strong>You:</strong> ${userInput}</p>`;
+
+        var typingIndicator = document.createElement("p");
+        typingIndicator.innerHTML = "<em>Typing...</em>";
+        chatMessages.appendChild(typingIndicator);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+
+        document.getElementById("submitBtn").textContent = "⏳";  // Show loading
+
+        fetch("http://127.0.0.1:5000/chatbot", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message: userInput }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            chatMessages.removeChild(typingIndicator);
+            chatMessages.innerHTML += `<p><strong>Saree Mahal:</strong> ${data.response}</p>`;
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        })
+        .catch(error => console.error("Error:", error))
+        .finally(() => {
+            document.getElementById("submitBtn").textContent = "▶";  // Reset button
+        });
+
+        document.getElementById("userInput").value = "";
+    }
+
+    var recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    recognition.lang = 'en-IN';
+    recognition.onresult = (event) => {
+        document.getElementById("userInput").value = event.results[0][0].transcript;
+        submitMessage();
+    };
+
+    function startSpeechRecognition() {
+        recognition.start();
+    }
+</script>
+
+</body>
+</html>
