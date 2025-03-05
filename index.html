@@ -223,7 +223,7 @@ async function sendMessage() {
         from flask_cors import CORS
 
 app = Flask(__name__)
-CORS(app, resources={r"/chatbot": {"origins": "*"}})  # Allow all origins for chatbot
+CORS(app, resources={r"/chatbot": {"origins": "https://nagalakshmiupadya.github.io/chatbot/"}})  # Allow all origins for chatbot
 
         # Load environment variables from .env file
         load_dotenv()
